@@ -36,10 +36,14 @@ config = SimpleNamespace(
 
 
 def format_path(path: str) -> str:
-    if path == "/":
-        return "/"
+    if path[-1] == "/":
+        return path
     else:
         return path + "/"
+
+
+def get_parent(path: str) -> str:
+    return path.rsplit("/", 2)[0] + "/"
 
 
 def main():
@@ -47,7 +51,10 @@ def main():
         print("please provide directory, base path, and output file")
         quit(1)
 
-    go_through_dir(Path(sys.argv[1]), Path(sys.argv[2]), format_path(sys.argv[3]))
+    base_output = Path(sys.argv[2])
+    if not base_output.is_dir():
+        base_output.mkdir()
+    go_through_dir(Path(sys.argv[1]), base_output, format_path(sys.argv[3]))
 
 
 def go_through_dir(
@@ -98,20 +105,20 @@ def go_through_dir(
                 (base_output / file.name).mkdir()
 
             output = open(base_output / file.name / "index.html", "w")
-            output.write(dir_listing(file, base_path + file.name))
+            output.write(dir_listing(file, base_path + file.name + "/"))
             output.close()
 
-            go_through_dir(file, base_output / file.name, base_path + file.name, False)
+            go_through_dir(file, base_output / file.name, base_path + file.name + "/", False)
 
 
 def cat_listing(path: Path, base_path: str):
     return put_in_body(
-        [ls(path.parent, base_path), cat(path, base_path), prompt(base_path)], base_path
+        [ls_cmd(path.parent, base_path), cat_cmd(path, base_path), prompt(base_path)], base_path
     )
 
 
 def dir_listing(path: Path, base_path: str):
-    return put_in_body([ls(Path(path), base_path), prompt(base_path)], base_path)
+    return put_in_body([ls_cmd(Path(path), base_path), prompt(base_path)], base_path)
 
 
 def put_in_body(elements: list[str], base_path: str):
@@ -127,7 +134,7 @@ def put_in_body(elements: list[str], base_path: str):
     </html>"""
 
 
-def ls(path: Path, base_path: str) -> str:
+def ls_cmd(path: Path, base_path: str) -> str:
     files = []
     lengths = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -206,6 +213,7 @@ def ls(path: Path, base_path: str) -> str:
 
     output = prompt(base_path, "ls -al")
 
+
     for row in files:
         output += "<span>"
         for col in range(len(row) - 1):
@@ -214,9 +222,9 @@ def ls(path: Path, base_path: str) -> str:
             )
         if row[0][0] == "d":
             if row[-1] == ".":
-                output += f'<a href="{base_path}" class="dir">{html.escape(row[-1])}</a></span><br>\n'
+                output += f'<a href="{base_path}" class="dir">.</a></span><br>\n'
             elif row[-1] == "..":
-                output += f'<a href="{base_path.rpartition("/")[0]}/{row[-1]}/" class="dir">{html.escape(row[-1])}</a></span><br>\n'
+                output += f'<a href="{get_parent(base_path)}" class="dir">..</a></span><br>\n'
             else:
                 output += f'<a href="{base_path}{row[-1]}/" class="dir">{html.escape(row[-1])}</a></span><br>\n'
         elif row[0][0] == "-":
@@ -227,7 +235,7 @@ def ls(path: Path, base_path: str) -> str:
     return output
 
 
-def cat(path: Path, base_path: str):
+def cat_cmd(path: Path, base_path: str):
     file = open(path, "r")
     contents = file.read()
     file.close()
