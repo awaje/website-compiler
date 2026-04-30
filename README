@@ -1,17 +1,16 @@
-Quick start command to run: `python3 src "" build`
+Quick start command to run: `python3 src build /`
 
 
 arg 1: `src`:
     the directory where the source files are located
 
-arg 2: `""`:
-	the prefix for where files are created
-	ie. if you wanted the root of this to be at `/cool_thing` instead of just
-	`/` replace it with `cool_thing`
-
-arg 3: `build`:
+arg 2: `build`:
 	the directory where the html files are outputted
 	WARNING: crashes for me if this directory does not exist
+
+arg 3: `/`:
+	the prefix for where files are created
+	ie. if you wanted the root of this to be at `/cool_thing` instead of just
 
 
 
